@@ -8,3 +8,4 @@ samples/
 *.ddq.xlsx
 *.ddq.json
 ddq_data/
+build/

@@ -3,12 +3,15 @@ download the Excel. Run with `ddq serve`."""
 
 from __future__ import annotations
 
+import base64
+import os
+import secrets
 from concurrent.futures import ThreadPoolExecutor
 from importlib import resources
 from pathlib import Path
 from typing import Callable
 
-from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from .pipeline import Review, run_review
@@ -30,6 +33,17 @@ def _page(name: str) -> HTMLResponse:
     return HTMLResponse(resources.files("ddq_agent.web").joinpath(name).read_text())
 
 
+def _authorized(header: str, username: str, password: str) -> bool:
+    scheme, _, encoded = header.partition(" ")
+    if scheme.lower() != "basic":
+        return False
+    try:
+        user, _, pw = base64.b64decode(encoded).decode().partition(":")
+    except ValueError:
+        return False
+    return secrets.compare_digest(user.encode(), username.encode()) & secrets.compare_digest(pw.encode(), password.encode())
+
+
 def create_app(
     store: Store | None = None,
     runner: Callable[..., Review] = run_review,
@@ -38,6 +52,26 @@ def create_app(
     store = store or Store()
     pool = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="ddq")
     app = FastAPI(title="DDQ review")
+
+    # Reviews run in this process, so any left queued or running were cut off by a restart.
+    for meta in store.list():
+        if meta.get("status") in ("queued", "running"):
+            store.update(meta["id"], status="failed", error="The server restarted before this review finished. Start it again.")
+
+    # Set DDQ_PASSWORD (and optionally DDQ_USERNAME) whenever the tool is reachable by others.
+    password = os.environ.get("DDQ_PASSWORD", "")
+    username = os.environ.get("DDQ_USERNAME", "ddq")
+    if password:
+
+        @app.middleware("http")
+        async def require_sign_in(request: Request, call_next):
+            if request.url.path == "/healthz" or _authorized(request.headers.get("authorization", ""), username, password):
+                return await call_next(request)
+            return Response("Sign in required.", status_code=401, headers={"WWW-Authenticate": 'Basic realm="DDQ"'})
+
+    @app.get("/healthz")
+    def healthz():
+        return {"ok": True}
 
     def execute(review_id: str) -> None:
         meta = store.meta(review_id)

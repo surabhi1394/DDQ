@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -45,6 +46,8 @@ def _serve(args) -> int:
 
     from .app import create_app
 
+    if args.host not in ("127.0.0.1", "localhost") and not os.environ.get("DDQ_PASSWORD"):
+        print("Warning: the tool is reachable from other machines without a password. Set DDQ_PASSWORD.", file=sys.stderr)
     print(f"DDQ tool running at http://{args.host}:{args.port}")
     uvicorn.run(create_app(workers=args.workers), host=args.host, port=args.port)
     return 0
@@ -91,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("serve", help="Run the web tool (new reviews, dashboard, Excel download)")
     p.add_argument("--host", default="127.0.0.1")
-    p.add_argument("--port", type=int, default=8000)
+    p.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
     p.add_argument("--workers", type=int, default=2, help="Reviews that can run at the same time")
     p.set_defaults(func=_serve)
 

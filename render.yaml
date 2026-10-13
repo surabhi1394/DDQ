@@ -1,0 +1,23 @@
+# Render Blueprint: a password-protected DDQ web tool with a disk for reviews and saved settings.
+# Render asks for the two values marked sync: false when you create the Blueprint.
+services:
+  - type: web
+    name: ddq
+    runtime: python
+    plan: starter  # disks need a paid instance
+    buildCommand: pip install .
+    startCommand: ddq serve --host 0.0.0.0 --workers 2
+    healthCheckPath: /healthz
+    disk:
+      name: ddq-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DDQ_DATA_DIR
+        value: /var/data
+      - key: DDQ_PASSWORD
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
