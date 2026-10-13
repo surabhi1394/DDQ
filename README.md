@@ -61,9 +61,24 @@ ddq serve            # then open http://127.0.0.1:8000
   Connector data (every value each source returned) and Property.
 
 Reviews are saved under `ddq_data/` (set `DDQ_DATA_DIR` to change it), one folder per review.
-To share it with the team, run `ddq serve --host 0.0.0.0` on a machine or cloud VM they can reach,
-behind your usual sign-in; the tool has no login of its own, and anyone who can open it can change Settings.
+To share it from your own server, set `DDQ_PASSWORD` and run `ddq serve --host 0.0.0.0`. Every page then
+asks for that password. Without it, anyone who can open the tool can start reviews and change Settings.
 Saved keys live in `ddq_data/settings.json` (file mode 600); a saved value overrides the environment.
+
+## Put it online for the team (Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/surabhi1394/DDQ)
+
+1. Click the button (or in Render choose **New > Blueprint** and pick this repo). Render reads `render.yaml`.
+2. When asked, enter `DDQ_PASSWORD` (the team's sign-in password) and `ANTHROPIC_API_KEY`.
+3. Render builds it and gives you a link like `https://ddq-xxxx.onrender.com`. Sign in with user `ddq`
+   (or set `DDQ_USERNAME`) and the password. Other keys can then be added on the Settings page.
+
+The Blueprint uses Render's **free** plan. It sleeps after 15 minutes without visitors (the first
+visit after that takes about a minute to wake it, so keep a review's page open until it finishes), and it has no disk, so reviews are cleared when it
+sleeps or redeploys: download the Excel when a review finishes. Keys entered in Render's environment
+settings are kept; keys typed on the Settings page are not. To keep everything, switch to the Starter
+plan and uncomment the disk lines in `render.yaml`. Claude API usage is billed by Anthropic either way.
 
 ## Run a review from the command line
 

@@ -144,3 +144,24 @@ def test_settings_dataset_upload_and_custom_sources(tmp_path):
     assert source["id"] == "county_parcels" and source["has_key"] and "header_value" not in source
     assert "parcel-secret" not in client.get("/api/settings").text
     assert client.delete("/api/settings/sources/county_parcels").json()["custom_sources"] == []
+
+
+def test_password_protects_every_page_except_health_check(tmp_path, monkeypatch):
+    monkeypatch.setenv("DDQ_PASSWORD", "s3cret")
+    client = make_client(tmp_path)
+    assert client.get("/healthz").status_code == 200
+    for path in ("/", "/settings", "/api/reviews", "/api/settings"):
+        r = client.get(path)
+        assert r.status_code == 401 and "Basic" in r.headers["www-authenticate"]
+    assert client.get("/", auth=("ddq", "wrong")).status_code == 401
+    assert client.get("/", auth=("ddq", "s3cret")).status_code == 200
+    assert client.get("/api/settings", auth=("ddq", "s3cret")).status_code == 200
+
+
+def test_restart_marks_unfinished_reviews_failed(tmp_path):
+    store = Store(tmp_path)
+    meta = store.create("1 Main St, Denver, CO", [])
+    store.update(meta["id"], status="running")
+    create_app(store=store, runner=lambda **kw: None)
+    after = store.meta(meta["id"])
+    assert after["status"] == "failed" and "restarted" in after["error"]
