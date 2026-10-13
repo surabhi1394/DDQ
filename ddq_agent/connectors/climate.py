@@ -176,7 +176,7 @@ class FirstStreet(Connector):
         if (missing := _needs_location(self, ctx)) is not None:
             return missing
         resp = ctx.client().get(
-            fill_template(FIRST_STREET_URL, ctx),
+            fill_template(settings.get("FIRST_STREET_URL") or FIRST_STREET_URL, ctx),
             headers={"Authorization": f"Bearer {settings.get('FIRST_STREET_API_KEY')}"},
         )
         resp.raise_for_status()

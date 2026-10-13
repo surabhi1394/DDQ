@@ -34,6 +34,8 @@ FIELDS: list[Field] = [
     Field("ESPM_PROPERTY_ID", "Default property id", "ENERGY STAR", "text", "Used when the documents don't state one."),
     Field("FIRST_STREET_API_KEY", "First Street API key", "First Street",
           help="First Street (riskfactor.com) property-level flood, fire, heat, wind and air risk."),
+    Field("FIRST_STREET_URL", "First Street lookup URL", "First Street", "text",
+          "Optional. The endpoint from your First Street plan, using {lat} {lon} or {address}."),
     Field("CRREM_PATHWAYS_CSV", "CRREM pathways CSV", "CRREM", "file",
           "Columns: country, property_type, year, energy_kwh_m2, carbon_kgco2e_m2"),
     Field("CAMBIUM_CSV", "Cambium emission factors CSV", "NREL Cambium", "file",
