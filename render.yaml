@@ -1,22 +1,27 @@
-# Render Blueprint: a password-protected DDQ web tool with a disk for reviews and saved settings.
-# Render asks for the two values marked sync: false when you create the Blueprint.
+# Render Blueprint: a password-protected DDQ web tool on Render's free plan.
+# Render asks for the values marked sync: false when you create the Blueprint.
+#
+# The free plan has no disk and sleeps after 15 minutes without visitors, so finished reviews are
+# cleared when it sleeps or redeploys (download the Excel when a review is done). Keys set here as
+# environment variables (in Render's Environment tab) are kept; keys typed on the Settings page are cleared with the reviews.
+# To keep everything, change plan to starter and uncomment the disk and DDQ_DATA_DIR lines.
 services:
   - type: web
     name: ddq
     runtime: python
-    plan: starter  # disks need a paid instance
+    plan: free
     buildCommand: pip install .
     startCommand: ddq serve --host 0.0.0.0 --workers 2
     healthCheckPath: /healthz
-    disk:
-      name: ddq-data
-      mountPath: /var/data
-      sizeGB: 1
+    # disk:
+    #   name: ddq-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
-      - key: DDQ_DATA_DIR
-        value: /var/data
+      # - key: DDQ_DATA_DIR
+      #   value: /var/data
       - key: DDQ_PASSWORD
         sync: false
       - key: ANTHROPIC_API_KEY

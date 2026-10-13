@@ -74,8 +74,11 @@ Saved keys live in `ddq_data/settings.json` (file mode 600); a saved value overr
 3. Render builds it and gives you a link like `https://ddq-xxxx.onrender.com`. Sign in with user `ddq`
    (or set `DDQ_USERNAME`) and the password. Other keys can then be added on the Settings page.
 
-The Blueprint uses Render's Starter instance with a 1 GB disk, so reviews and saved settings survive
-restarts and redeploys. A review that is running during a redeploy is marked failed and can be started again.
+The Blueprint uses Render's **free** plan. It sleeps after 15 minutes without visitors (the first
+visit after that takes about a minute to wake it, so keep a review's page open until it finishes), and it has no disk, so reviews are cleared when it
+sleeps or redeploys: download the Excel when a review finishes. Keys entered in Render's environment
+settings are kept; keys typed on the Settings page are not. To keep everything, switch to the Starter
+plan and uncomment the disk lines in `render.yaml`. Claude API usage is billed by Anthropic either way.
 
 ## Run a review from the command line
 
