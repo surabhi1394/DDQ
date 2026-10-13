@@ -12,9 +12,9 @@ CAMBIUM_CSV columns:
 from __future__ import annotations
 
 import csv
-import os
 from pathlib import Path
 
+from .. import settings
 from ..models import ConnectorStatus
 from .base import Connector, ConnectorContext
 
@@ -67,7 +67,7 @@ class Crrem(Connector):
         ptype = (ctx.profile.property_type or "office").lower()
         country = (ctx.profile.country or "US").upper()
         rows = [
-            r for r in _read_csv(os.environ["CRREM_PATHWAYS_CSV"])
+            r for r in _read_csv(settings.get("CRREM_PATHWAYS_CSV"))
             if r["country"].upper() == country and r["property_type"].lower() == ptype
         ]
         if not rows:
@@ -107,7 +107,7 @@ class Cambium(Connector):
         state = (ctx.profile.state or "").upper()
         if not state:
             return self.result(ConnectorStatus.NO_DATA, "No state in the OM.")
-        rows = [r for r in _read_csv(os.environ["CAMBIUM_CSV"]) if r["state"].upper() == state]
+        rows = [r for r in _read_csv(settings.get("CAMBIUM_CSV")) if r["state"].upper() == state]
         if not rows:
             return self.result(ConnectorStatus.NO_DATA, f"No Cambium rows for {state}.")
         factors = {f"{r['scenario']}:{r['year']}": float(r["lrmer_kg_per_mwh"]) for r in rows}

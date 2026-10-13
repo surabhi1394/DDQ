@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DDQ Settings</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top"><a class="brand" href="/">ESG DDQ Review</a><nav><a href="/">Reviews</a></nav></header>
+  <main>
+    <h1>Settings</h1>
+    <p class="sub">API keys and data files for the sources the agent uses. Keys are saved on the server running this tool and are never shown again after you save them. Free sources (FEMA, USGS, Census, web search) need nothing here.</p>
+
+    <div class="card">
+      <h2>API keys and data files</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Source</th><th>Setting</th><th>Status</th><th>Value</th><th></th></tr></thead>
+        <tbody id="fields"></tbody>
+      </table></div>
+      <div class="error" id="field-err" role="alert"></div>
+    </div>
+
+    <div class="card">
+      <h2>Custom sources</h2>
+      <p class="sub" style="margin:0 0 12px">Add any API that returns property or location data. The URL can use
+        <code>{lat}</code> <code>{lon}</code> <code>{address}</code> <code>{street}</code> <code>{city}</code> <code>{state}</code> <code>{zip}</code>.
+        Its response is passed to the agents with every review.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Name</th><th>URL</th><th>Key</th><th></th></tr></thead>
+        <tbody id="sources"></tbody>
+      </table></div>
+      <form id="add-source" class="source-form">
+        <input type="text" name="name" placeholder="Name, e.g. County parcel API" required>
+        <input type="text" name="url" placeholder="https://example.gov/api/parcel?lat={lat}&lon={lon}" required>
+        <input type="text" name="header_name" placeholder="Key header (optional), e.g. X-API-Key">
+        <input type="password" name="header_value" placeholder="Key value (optional)" autocomplete="off">
+        <input type="text" name="notes" placeholder="What it returns (helps the agent use it)">
+        <button type="submit">Add source</button>
+      </form>
+      <div class="error" id="source-err" role="alert"></div>
+    </div>
+  </main>
+<script>
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function render(state) {
+  document.getElementById("fields").innerHTML = state.fields.map(f => {
+    const status = f.set ? `<span class="pill ok">${f.from_env ? "set (environment)" : "saved"}</span>` : '<span class="pill">not set</span>';
+    let input;
+    if (f.kind === "file") input = `<input type="file" data-file="${esc(f.key)}" accept=".csv,text/csv">`;
+    else input = `<input type="${f.kind === "secret" ? "password" : "text"}" data-key="${esc(f.key)}" autocomplete="off"
+      placeholder="${f.set ? (f.kind === "secret" ? "Saved. Enter a new value to replace" : esc(f.value)) : "Enter value"}">`;
+    return `<tr><td>${esc(f.source)}</td>
+      <td>${esc(f.label)}${f.help ? `<div class="note">${esc(f.help)}</div>` : ""}${f.kind === "file" && f.value ? `<div class="note">Current: ${esc(f.value)}</div>` : ""}</td>
+      <td>${status}</td><td>${input}</td>
+      <td>${f.set && !f.from_env ? `<button type="button" class="link" data-clear="${esc(f.key)}">Clear</button>` : ""}</td></tr>`;
+  }).join("") + `<tr><td colspan="5"><button type="button" id="save">Save keys</button></td></tr>`;
+
+  document.getElementById("save").onclick = async () => {
+    const values = {};
+    document.querySelectorAll("[data-key]").forEach(i => { if (i.value.trim()) values[i.dataset.key] = i.value.trim(); });
+    await send("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ values }) }, "field-err");
+  };
+  document.querySelectorAll("[data-clear]").forEach(b => b.onclick = () =>
+    send("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ values: { [b.dataset.clear]: null } }) }, "field-err"));
+  document.querySelectorAll("[data-file]").forEach(i => i.onchange = () => {
+    const body = new FormData(); body.append("key", i.dataset.file); body.append("file", i.files[0]);
+    send("/api/settings/file", { method: "POST", body }, "field-err");
+  });
+
+  document.getElementById("sources").innerHTML = state.custom_sources.length
+    ? state.custom_sources.map(s => `<tr><td>${esc(s.name)}${s.notes ? `<div class="note">${esc(s.notes)}</div>` : ""}</td>
+        <td style="overflow-wrap:anywhere">${esc(s.url)}</td><td>${s.has_key ? esc(s.header_name) + " (saved)" : "None"}</td>
+        <td><button type="button" class="link" data-remove="${esc(s.id)}">Remove</button></td></tr>`).join("")
+    : '<tr><td colspan="4" class="empty">No custom sources yet.</td></tr>';
+  document.querySelectorAll("[data-remove]").forEach(b => b.onclick = () =>
+    send("/api/settings/sources/" + encodeURIComponent(b.dataset.remove), { method: "DELETE" }, "source-err"));
+}
+
+async function send(url, opts, errId) {
+  const err = document.getElementById(errId); err.textContent = "";
+  const r = await fetch(url, opts), data = await r.json();
+  if (!r.ok) { err.textContent = data.detail || "Something went wrong."; return false; }
+  render(data); return true;
+}
+
+document.getElementById("add-source").onsubmit = async e => {
+  e.preventDefault();
+  const form = e.target, body = Object.fromEntries(new FormData(form));
+  if (await send("/api/settings/sources", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }, "source-err")) form.reset();
+};
+
+fetch("/api/settings").then(r => r.json()).then(render);
+</script>
+</body>
+</html>

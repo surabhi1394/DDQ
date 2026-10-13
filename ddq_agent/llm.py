@@ -23,20 +23,68 @@ class RefusalError(RuntimeError):
     pass
 
 
+IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
+TEXT_TYPES = {".txt", ".csv", ".md", ".json"}
+SHEET_TYPES = {".xlsx", ".xlsm"}
+SUPPORTED_SUFFIXES = {".pdf", *IMAGE_TYPES, *TEXT_TYPES, *SHEET_TYPES}
+
+
+def _sheet_text(path: Path) -> str:
+    import openpyxl
+
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    parts = []
+    for ws in wb.worksheets:
+        parts.append(f"## Sheet: {ws.title}")
+        for row in ws.iter_rows(values_only=True):
+            if any(v is not None for v in row):
+                parts.append(",".join("" if v is None else str(v).replace("\n", " ") for v in row))
+    return "\n".join(parts)
+
+
+def document_block(path: Path, title: str | None = None) -> dict:
+    """One supporting document as a content block the model can read and cite."""
+    path = Path(path)
+    suffix = path.suffix.lower()
+    title = title or path.name
+    if suffix == ".pdf":
+        data = base64.standard_b64encode(path.read_bytes()).decode()
+        return {"type": "document", "title": title, "source": {"type": "base64", "media_type": "application/pdf", "data": data}}
+    if suffix in IMAGE_TYPES:
+        data = base64.standard_b64encode(path.read_bytes()).decode()
+        return {"type": "image", "source": {"type": "base64", "media_type": IMAGE_TYPES[suffix], "data": data}}
+    if suffix in SHEET_TYPES:
+        text = _sheet_text(path)
+    elif suffix in TEXT_TYPES:
+        text = path.read_text(errors="replace")
+    else:
+        raise ValueError(f"Unsupported document type: {path.name}")
+    return {"type": "document", "title": title, "source": {"type": "text", "media_type": "text/plain", "data": text}}
+
+
+def document_blocks(documents: list[tuple[Path, str]]) -> list[dict]:
+    """All documents, each preceded by a label; the prefix is cached so every stage re-reads it cheaply."""
+    blocks: list[dict] = []
+    for path, title in documents:
+        blocks.append({"type": "text", "text": f"Document: {title}"})
+        blocks.append(document_block(path, title))
+    if blocks:
+        blocks[-1] = {**blocks[-1], "cache_control": {"type": "ephemeral"}}
+    return blocks
+
+
 def pdf_block(path: Path) -> dict:
-    """The OM as a document block, cached so every stage re-reads it cheaply."""
-    data = base64.standard_b64encode(Path(path).read_bytes()).decode()
-    return {
-        "type": "document",
-        "source": {"type": "base64", "media_type": "application/pdf", "data": data},
-        "title": Path(path).name,
-        "cache_control": {"type": "ephemeral"},
-    }
+    return {**document_block(path), "cache_control": {"type": "ephemeral"}}
 
 
 class LLM:
     def __init__(self, client: Any = None, model: str = MODEL, effort: str = EFFORT):
-        self.client = client or anthropic.Anthropic()
+        if client is None:
+            from . import settings
+
+            key = settings.get("ANTHROPIC_API_KEY")
+            client = anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
+        self.client = client
         self.model = model
         self.effort = effort
 

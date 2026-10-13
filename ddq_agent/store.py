@@ -57,20 +57,22 @@ class Store:
             raise KeyError(review_id)
         return path
 
-    def create(self, address: str | None, om_name: str | None, om_bytes: bytes | None) -> dict:
+    def create(self, address: str | None, documents: list[tuple[str, str, bytes]] | None = None) -> dict:
+        """documents: (filename, label, content) for each uploaded file."""
         review_id = dt.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3)
         folder = self.root / review_id
-        folder.mkdir()
-        om_path = None
-        if om_bytes:
-            om_path = folder / "om.pdf"
-            om_path.write_bytes(om_bytes)
+        (folder / "documents").mkdir(parents=True)
+        docs = []
+        for n, (filename, label, content) in enumerate(documents or [], start=1):
+            safe = re.sub(r"[^A-Za-z0-9._ -]+", "_", Path(filename).name)[-100:] or f"document-{n}"
+            path = folder / "documents" / f"{n:02d}-{safe}"
+            path.write_bytes(content)
+            docs.append({"name": Path(filename).name, "label": label, "path": str(path), "bytes": len(content)})
         meta = {
             "id": review_id,
             "address": address or "",
-            "om_name": om_name or "",
-            "om_path": str(om_path) if om_path else "",
-            "title": address or om_name or review_id,
+            "documents": docs,
+            "title": address or (docs[0]["name"] if docs else review_id),
             "created_at": dt.datetime.now().isoformat(timespec="seconds"),
             "status": "queued",
             "steps": [],

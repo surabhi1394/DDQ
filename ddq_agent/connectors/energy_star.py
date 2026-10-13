@@ -11,6 +11,7 @@ import datetime as dt
 import os
 import xml.etree.ElementTree as ET
 
+from .. import settings
 from ..models import ConnectorStatus
 from .base import Connector, ConnectorContext
 
@@ -34,15 +35,15 @@ class EnergyStar(Connector):
     required_env = ("ESPM_USERNAME", "ESPM_PASSWORD")
 
     def fetch(self, ctx: ConnectorContext):
-        prop_id = ctx.profile.espm_property_id or os.environ.get("ESPM_PROPERTY_ID")
+        prop_id = ctx.profile.espm_property_id or settings.get("ESPM_PROPERTY_ID")
         if not prop_id:
             return self.result(ConnectorStatus.NO_DATA, "No Portfolio Manager property id in the OM or ESPM_PROPERTY_ID.")
         year = dt.date.today().year - 1
         resp = ctx.client().get(
             f"{ESPM_BASE}/property/{prop_id}/metrics",
             params={"year": year, "month": 12, "measurementSystem": "EPA"},
-            headers={"PM-Metrics": os.environ.get("ESPM_METRICS", DEFAULT_METRICS)},
-            auth=(os.environ["ESPM_USERNAME"], os.environ["ESPM_PASSWORD"]),
+            headers={"PM-Metrics": settings.get("ESPM_METRICS", DEFAULT_METRICS)},
+            auth=(settings.get("ESPM_USERNAME"), settings.get("ESPM_PASSWORD")),
         )
         resp.raise_for_status()
         metrics = parse_metrics(resp.text)

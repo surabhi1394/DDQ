@@ -3,8 +3,10 @@ ENERGY STAR feeds CRREM."""
 
 from __future__ import annotations
 
+from .. import settings
 from ..models import ConnectorResult, PropertyProfile
 from .base import Connector, ConnectorContext
+from .climate import CustomSource, FemaRiskIndex, FirstStreet, UsgsElevation, UsgsSeismic
 from .energy_star import EnergyStar
 from .location import FemaFlood, Geocode
 from .pathways import Cambium, Crrem
@@ -14,6 +16,10 @@ from .regs import FinesRegs
 DEFAULT_CONNECTORS: list[type[Connector]] = [
     Geocode,
     FemaFlood,
+    FemaRiskIndex,
+    UsgsSeismic,
+    UsgsElevation,
+    FirstStreet,
     Physrisk,
     EnergyStar,
     Crrem,
@@ -28,7 +34,8 @@ def run_connectors(
     profile: PropertyProfile, connectors: list[Connector] | None = None, ctx: ConnectorContext | None = None
 ) -> list[ConnectorResult]:
     ctx = ctx or ConnectorContext(profile=profile)
-    connectors = connectors if connectors is not None else [c() for c in DEFAULT_CONNECTORS]
+    if connectors is None:
+        connectors = [c() for c in DEFAULT_CONNECTORS] + [CustomSource(s) for s in settings.custom_sources()]
     for connector in connectors:
         ctx.results[connector.name] = connector.run(ctx)
     return list(ctx.results.values())

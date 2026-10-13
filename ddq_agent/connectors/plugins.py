@@ -4,8 +4,8 @@ reports NOT_CONFIGURED until its credentials are set; fill in fetch() when acces
 
 from __future__ import annotations
 
-import os
 
+from .. import settings
 from ..models import ConnectorStatus
 from .base import Connector, ConnectorContext
 
@@ -52,8 +52,8 @@ class Physrisk(Connector):
     def fetch(self, ctx: ConnectorContext):
         if ctx.latitude is None:
             return self.result(ConnectorStatus.NO_DATA, "No coordinates (geocode did not succeed).")
-        scenario = os.environ.get("PHYSRISK_SCENARIO", "ssp585")
-        year = int(os.environ.get("PHYSRISK_YEAR", "2050"))
+        scenario = settings.get("PHYSRISK_SCENARIO", "ssp585")
+        year = int(settings.get("PHYSRISK_YEAR", "2050"))
         body = {
             "items": [
                 {
@@ -68,7 +68,7 @@ class Physrisk(Connector):
                 for hazard, indicator in self.hazards
             ]
         }
-        resp = ctx.client().post(os.environ["PHYSRISK_API_URL"].rstrip("/") + "/api/get_hazard_data", json=body)
+        resp = ctx.client().post(settings.get("PHYSRISK_API_URL").rstrip("/") + "/api/get_hazard_data", json=body)
         resp.raise_for_status()
         payload = resp.json()
         return self.result(

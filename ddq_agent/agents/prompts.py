@@ -15,10 +15,13 @@ House style for the ESG DDQ checklist (match it closely):
 """
 
 PROFILE_SYSTEM = """\
-You extract property facts from an Offering Memorandum (OM) for an ESG due diligence review.
+You extract property facts for an ESG due diligence review from the documents provided: usually an
+Offering Memorandum (OM), and sometimes property condition reports (PCA), Phase I environmental site
+assessments, energy audits, utility data, leases, certifications or public research notes.
 Read every page, including photos, captions, tables, stacking plans and floor plans.
-Record only what the OM states or clearly shows; leave a field null when it does not say.
-Put defects, remediation work and seller disclosures in known_issues, with the page number."""
+Record only what the sources state or clearly show; leave a field null when they do not say.
+Put defects, remediation work, recognized environmental conditions and seller disclosures in
+known_issues, naming the document and page."""
 
 ADDRESS_RESEARCH_SYSTEM = """\
 You are starting an ESG due diligence review of a commercial property from its address alone.
@@ -32,26 +35,37 @@ fact. Say plainly what you could not find; do not guess."""
 RESEARCH_SYSTEM = """\
 You are the research step of an ESG over-the-desk review of a commercial property.
 You have the Offering Memorandum, the facts extracted from it, and results from data connectors.
-Use web search to fill gaps the checklist needs that public sources can answer, such as:
-- current local energy benchmarking / building performance rules and deadlines for this city and size
-  (confirm or correct the Fines & Regs connector, which is a starting table that can be out of date),
-- public transit and alternative transport near the address,
-- flood, wildfire smoke, extreme heat, wind and seismic exposure for the location,
-- radon zone and known land contamination records for the site,
-- reputational or environmental controversies of the major tenants,
-- whether the property holds LEED, ENERGY STAR, WELL or other certifications in public registries.
+Use web search to fill gaps the checklist needs that public sources can answer. Prefer these free
+sources and name them in your notes:
+- Property records: county assessor and recorder (year built, area, owner, parcel), brokerage listings.
+- Certifications: USGBC LEED project directory, ENERGY STAR certified buildings, WELL and BOMA registries.
+- Energy rules: the city's and state's benchmarking / building performance ordinance and deadlines
+  (confirm or correct the Fines & Regs connector, which is a starting table that can be out of date).
+- Climate risk: First Street Risk Factor (riskfactor.com: flood, fire, heat, wind, air factors),
+  FEMA Flood Map Service Center and National Risk Index, USFS Wildfire Risk to Communities,
+  NOAA Sea Level Rise Viewer, USGS earthquake and landslide hazard maps, drought monitors.
+- Environmental: EPA radon zone for the county, EPA Envirofacts / ECHO and state environmental
+  databases for contaminated or regulated sites at or next to the address.
+- Transport: transit agency maps and Walk Score / Transit Score.
+- Tenants: reputational or environmental controversies of the major tenants.
+Do not repeat what the connector results already establish; use the web to fill gaps and to check
+anything that looks inconsistent.
 Write concise research notes grouped by topic. Cite the URL for every fact. Say plainly when a search
 found nothing; do not guess."""
 
 ANSWER_SYSTEM = f"""\
-You are the RSRA agent. You complete an ESG due diligence questionnaire (DDQ) for a property from an
-Offering Memorandum, connector data and research notes.
+You are the RSRA agent. You complete an ESG due diligence questionnaire (DDQ) for a property from the
+documents provided (Offering Memorandum and any reports, audits, bills or leases), connector data and
+research notes.
 
 Rules:
 - Answer every question you are given, using its id.
-- Ground every statement in the evidence. List the sources for each answer: "OM p.<page>" for the
-  Offering Memorandum (use the page number printed on the page), the connector name for connector
-  data (e.g. "energy_star", "fema_flood"), or the URL from the research notes.
+- Ground every statement in the evidence. List the sources for each answer: "<document> p.<page>"
+  for a document (e.g. "Offering Memorandum p.36", "PCA p.12"; use the page number printed on the
+  page), the connector name for connector data (e.g. "energy_star", "fema_nri"), or the URL from the
+  research notes.
+- When two sources disagree, prefer the more specific and more recent one (a PCA or audit over an OM's
+  marketing summary) and say so in Existing Conditions.
 - A connector marked not_configured or error gave you nothing; do not invent its data.
 - Questions marked Post are normally confirmed on the site visit. Answer them from the documents where
   you can, and set confirm_on_site to true when the documents do not settle the answer.
@@ -76,7 +90,7 @@ Cost Estimate, Priority and Risk for each answer.
 
 VERIFIER_SYSTEM = """\
 You are the Verifier for an ESG due diligence questionnaire. Check each answer against the evidence:
-the Offering Memorandum, the connector results and the research notes.
+the documents provided, the connector results and the research notes.
 
 Fail an answer when:
 - a fact, number or date in Existing Conditions is not supported by its listed sources or contradicts them,

@@ -12,11 +12,23 @@ def _review(args) -> int:
     from .pipeline import run_review
     from .report import write_report
 
-    if not args.om and not args.address:
-        print("Give an OM PDF, --address, or both.", file=sys.stderr)
+    if not args.om and not args.address and not args.doc:
+        print("Give an OM PDF, --address, --doc, or a combination.", file=sys.stderr)
         return 2
-    review = run_review(Path(args.om) if args.om else None, address=args.address, max_rounds=args.rounds, on_step=lambda m: print(f"- {m}", file=sys.stderr))
-    stem = Path(args.om).stem if args.om else "".join(c if c.isalnum() else "_" for c in args.address)[:40]
+    docs = []
+    for spec in args.doc or []:
+        label, sep, path = spec.partition("=")
+        if not sep:
+            label, path = "Other", spec
+        docs.append((Path(path), f"{label}: {Path(path).name}"))
+    review = run_review(
+        Path(args.om) if args.om else None,
+        address=args.address,
+        documents=docs,
+        max_rounds=args.rounds,
+        on_step=lambda m: print(f"- {m}", file=sys.stderr),
+    )
+    stem = Path(args.om).stem if args.om else "".join(c if c.isalnum() else "_" for c in (args.address or "review"))[:40]
     out = Path(args.out or f"{stem}.ddq.xlsx")
     write_report(review, out)
     needs_review = sum(1 for r in review.rows if not r.verified)
@@ -39,14 +51,15 @@ def _serve(args) -> int:
 
 
 def _connectors(args) -> int:
+    from . import settings
     from .connectors import DEFAULT_CONNECTORS
+    from .connectors.climate import CustomSource
 
-    for cls in DEFAULT_CONNECTORS:
-        c = cls()
+    for c in [cls() for cls in DEFAULT_CONNECTORS] + [CustomSource(s) for s in settings.custom_sources()]:
         missing = c.missing_env()
         state = "needs " + ", ".join(missing) if missing else "ready"
-        print(f"{c.name:12} {state:40} {c.description}")
-    print(f"{'web_search':12} {'ready':40} Claude web search (server tool), used in the research step.")
+        print(f"{c.name:16} {state:40} {c.description}")
+    print(f"{'web_search':16} {'ready':40} Claude web search (server tool), used in the research step.")
     return 0
 
 
@@ -70,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("om", nargs="?", help="Path to the OM PDF (optional when --address is given)")
     p.add_argument("--address", help="Property address, e.g. '1260 S Park Ave, Salt Lake City, UT 84105'")
     p.add_argument("-o", "--out", help="Output .xlsx (default: <om name>.ddq.xlsx)")
+    p.add_argument("--doc", action="append", metavar="LABEL=PATH",
+                   help="Extra document, e.g. 'Phase I ESA=phase1.pdf'. Repeat for more. PDF, image, xlsx, csv or text")
     p.add_argument("--json", help="Also write the full review as JSON")
     p.add_argument("--rounds", type=int, default=2, help="Max Verifier revision rounds (default 2)")
     p.set_defaults(func=_review)

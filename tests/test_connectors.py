@@ -104,3 +104,54 @@ def test_geocode_then_flood_zone():
     assert results[0].status == ConnectorStatus.OK and ctx.latitude == 40.74
     assert results[1].data == {"zone": "X", "subtype": "AREA OF MINIMAL FLOOD HAZARD", "sfha": False}
     assert "outside the Special Flood Hazard Area" in results[1].summary
+
+
+def test_new_connectors_need_coordinates():
+    from ddq_agent.connectors.climate import FemaRiskIndex, UsgsElevation, UsgsSeismic
+
+    for c in (FemaRiskIndex(), UsgsSeismic(), UsgsElevation()):
+        assert c.run(ConnectorContext(profile=SLC)).status == ConnectorStatus.NO_DATA
+
+
+def test_climate_connectors_parse_responses():
+    from ddq_agent.connectors.climate import FemaRiskIndex, UsgsElevation, UsgsSeismic
+
+    def handler(request: httpx.Request):
+        host = request.url.host
+        if host == "services.arcgis.com":
+            return httpx.Response(200, json={"features": [{"attributes": {
+                "TRACTFIPS": "49035114000", "RISK_RATNG": "Relatively Moderate", "SOVI_RATNG": "Relatively Low",
+                "ERQK_RISKR": "Very High", "WFIR_RISKR": "Relatively Moderate", "HWAV_RISKR": "Relatively High",
+                "CFLD_RISKR": "Not Applicable",
+            }}]})
+        if host == "earthquake.usgs.gov":
+            assert request.url.params["latitude"] == "40.74"
+            return httpx.Response(200, json={"response": {"data": {"sds": 1.02, "sd1": 0.41, "sdc": "D", "other": 1}}})
+        if host == "epqs.nationalmap.gov":
+            return httpx.Response(200, json={"value": "4271.36"})
+        raise AssertionError(host)
+
+    ctx = ConnectorContext(profile=SLC, latitude=40.74, longitude=-111.88, http=httpx.Client(transport=httpx.MockTransport(handler)))
+    nri = FemaRiskIndex().run(ctx)
+    assert nri.status == ConnectorStatus.OK
+    assert nri.data["hazards"] == {"Earthquake": "Very High", "Heat wave": "Relatively High", "Wildfire": "Relatively Moderate"}
+    assert "Earthquake (Very High)" in nri.summary and "Heat wave (Relatively High)" in nri.summary
+    seismic = UsgsSeismic().run(ctx)
+    assert seismic.data == {"sds": 1.02, "sd1": 0.41, "sdc": "D"}
+    assert UsgsElevation().run(ctx).data == {"elevation_ft": 4271.4}
+
+
+def test_custom_source_fills_url_and_sends_key():
+    from ddq_agent.connectors.climate import CustomSource
+
+    def handler(request: httpx.Request):
+        assert str(request.url) == "https://gis.example.gov/parcel?lat=40.740000&lon=-111.880000&city=Salt%20Lake%20City"
+        assert request.headers["X-API-Key"] == "k"
+        return httpx.Response(200, json={"parcel": "16-20-276-065", "year_built": 2020})
+
+    source = {"id": "parcels", "name": "County parcels", "url": "https://gis.example.gov/parcel?lat={lat}&lon={lon}&city={city}",
+              "header_name": "X-API-Key", "header_value": "k"}
+    ctx = ConnectorContext(profile=SLC, latitude=40.74, longitude=-111.88, http=httpx.Client(transport=httpx.MockTransport(handler)))
+    r = CustomSource(source).run(ctx)
+    assert r.connector == "custom:parcels" and r.status == ConnectorStatus.OK
+    assert '"year_built": 2020' in r.data["response"]

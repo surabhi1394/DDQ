@@ -6,16 +6,24 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from importlib import resources
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from .pipeline import Review, run_review
 from .report import write_report
 from .store import Store, review_to_dict, summarize
 
-MAX_OM_BYTES = 30 * 1024 * 1024  # the API's request limit is 32 MB
+from . import settings
+from .llm import SUPPORTED_SUFFIXES
+
+# Documents are sent base64-encoded with each model request, which has a 32 MB limit.
+MAX_UPLOAD_BYTES = 22 * 1024 * 1024
+DOCUMENT_LABELS = [
+    "Offering Memorandum", "Property Condition Assessment", "Phase I ESA", "Energy audit",
+    "Utility data", "ENERGY STAR / benchmarking report", "Lease", "Certification", "Other",
+]
 
 
 def _page(name: str) -> HTMLResponse:
@@ -36,8 +44,8 @@ def create_app(
         store.update(review_id, status="running")
         try:
             review = runner(
-                om_path=Path(meta["om_path"]) if meta["om_path"] else None,
                 address=meta["address"] or None,
+                documents=[(Path(d["path"]), f"{d['label']}: {d['name']}") for d in meta["documents"]],
                 on_step=lambda msg: store.update(review_id, step=msg),
             )
             store.save_review(review_id, review)
@@ -66,19 +74,76 @@ def create_app(
         return store.list()
 
     @app.post("/api/reviews", status_code=201)
-    async def create_review(address: str = Form(""), om: Optional[UploadFile] = File(None)):
+    async def create_review(
+        address: str = Form(""),
+        files: list[UploadFile] = File(default=[]),
+        labels: list[str] = Form(default=[]),
+    ):
         address = address.strip()
-        om_bytes = await om.read() if om is not None and om.filename else None
-        if not address and not om_bytes:
-            raise HTTPException(400, "Enter an address or upload an Offering Memorandum.")
-        if om_bytes:
-            if not om_bytes.startswith(b"%PDF"):
-                raise HTTPException(400, "The Offering Memorandum must be a PDF.")
-            if len(om_bytes) > MAX_OM_BYTES:
-                raise HTTPException(400, "The PDF is larger than 30 MB.")
-        meta = store.create(address or None, om.filename if om_bytes else None, om_bytes)
+        documents = []
+        for n, upload in enumerate(f for f in files if f.filename):
+            content = await upload.read()
+            suffix = Path(upload.filename).suffix.lower()
+            if suffix not in SUPPORTED_SUFFIXES:
+                raise HTTPException(400, f"{upload.filename}: use PDF, image, Excel, CSV or text files.")
+            if suffix == ".pdf" and not content.startswith(b"%PDF"):
+                raise HTTPException(400, f"{upload.filename} is not a valid PDF.")
+            label = labels[n] if n < len(labels) and labels[n] in DOCUMENT_LABELS else "Other"
+            documents.append((upload.filename, label, content))
+        if not address and not documents:
+            raise HTTPException(400, "Enter an address or upload at least one document.")
+        if sum(len(d[2]) for d in documents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(400, "Documents total more than 22 MB. Remove some or upload smaller files.")
+        meta = store.create(address or None, documents)
         pool.submit(execute, meta["id"])
         return meta
+
+    @app.get("/api/document-labels")
+    def document_labels():
+        return DOCUMENT_LABELS
+
+    @app.get("/settings", response_class=HTMLResponse)
+    def settings_page():
+        return _page("settings.html")
+
+    @app.get("/api/settings")
+    def get_settings():
+        return settings.describe()
+
+    @app.post("/api/settings")
+    def save_settings(body: dict = Body(...)):
+        values = body.get("values", {})
+        try:
+            settings.set_values({k: (None if v is None else str(v)) for k, v in values.items()})
+        except KeyError as exc:
+            raise HTTPException(400, f"Unknown setting {exc}") from None
+        return settings.describe()
+
+    @app.post("/api/settings/file")
+    async def save_settings_file(key: str = Form(...), file: UploadFile = File(...)):
+        field = next((f for f in settings.FIELDS if f.key == key and f.kind == "file"), None)
+        if field is None:
+            raise HTTPException(400, "That setting does not take a file.")
+        path = settings.data_file_path(key, file.filename or "data.csv")
+        path.write_bytes(await file.read())
+        settings.set_values({key: str(path.resolve())})
+        return settings.describe()
+
+    @app.post("/api/settings/sources", status_code=201)
+    def add_source(body: dict = Body(...)):
+        try:
+            settings.add_custom_source(
+                body.get("name", ""), body.get("url", ""), body.get("header_name", ""),
+                body.get("header_value", ""), body.get("notes", ""),
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from None
+        return settings.describe()
+
+    @app.delete("/api/settings/sources/{source_id}")
+    def remove_source(source_id: str):
+        settings.remove_custom_source(source_id)
+        return settings.describe()
 
     @app.get("/api/reviews/{review_id}")
     def get_review(review_id: str):

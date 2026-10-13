@@ -9,12 +9,12 @@ ddq_agent/connectors/__init__.py.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from typing import Optional
 
 import httpx
 
+from .. import settings
 from ..models import ConnectorResult, ConnectorStatus, PropertyProfile
 
 
@@ -38,12 +38,12 @@ class Connector:
     required_env: tuple[str, ...] = ()
 
     def missing_env(self) -> list[str]:
-        return [k for k in self.required_env if not os.environ.get(k)]
+        return [k for k in self.required_env if not settings.get(k)]
 
     def run(self, ctx: ConnectorContext) -> ConnectorResult:
         missing = self.missing_env()
         if missing:
-            return self.result(ConnectorStatus.NOT_CONFIGURED, f"Set {', '.join(missing)} to enable.")
+            return self.result(ConnectorStatus.NOT_CONFIGURED, f"Add {', '.join(missing)} in Settings to enable.")
         try:
             return self.fetch(ctx)
         except Exception as exc:  # one failing source must not stop the review

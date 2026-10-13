@@ -7,19 +7,20 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <header class="top"><a class="brand" href="/">ESG DDQ Review</a></header>
+  <header class="top"><a class="brand" href="/">ESG DDQ Review</a><nav><a href="/settings">Settings</a></nav></header>
   <main>
     <h1>New review</h1>
-    <p class="sub">Enter a property address, upload its Offering Memorandum, or both. The agent runs the full over-the-desk analysis and fills in the ESG DDQ checklist.</p>
+    <p class="sub">Enter a property address, upload its documents, or both. The agent runs the full over-the-desk analysis and fills in the ESG DDQ checklist.</p>
 
     <div class="grid two">
       <form class="card" id="new-review">
         <label for="address">Property address</label>
         <input type="text" id="address" name="address" placeholder="1260 S Park Ave, Salt Lake City, UT 84105" autocomplete="off">
         <div class="or">and / or</div>
-        <label>Offering Memorandum (PDF)</label>
-        <div class="drop" id="drop">Drop a PDF here or click to choose</div>
-        <input type="file" id="om" name="om" accept="application/pdf" hidden>
+        <label>Documents</label>
+        <div class="drop" id="drop">Drop files here or click to choose<br><small>OM, PCA, Phase I ESA, energy audits, utility data, leases. PDF, images, Excel, CSV or text, up to 22 MB in total.</small></div>
+        <input type="file" id="om" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.xlsx,.xlsm,.csv,.txt,.md,.json" multiple hidden>
+        <ul class="files" id="files"></ul>
         <div style="margin-top:16px"><button type="submit" id="go">Start review</button></div>
         <div class="error" id="err" role="alert"></div>
       </form>
@@ -27,7 +28,8 @@
       <div class="card">
         <h2>What it checks</h2>
         <p class="sub" style="margin:0 0 8px">The 65-question ESG DDQ across energy and GHG, building systems, lease, health and wellbeing, transport, climate risk and critical dependencies.</p>
-        <p class="sub" style="margin:0">Data sources: the OM, geocoding, FEMA flood zones, ENERGY STAR, CRREM, NREL Cambium, local energy rules, web search, plus physrisk, BPD and Audette once connected. Every answer is checked by a verifier, and anything it can't support is flagged for review.</p>
+        <p class="sub" style="margin:0 0 8px">Free sources on every review: your documents, property records and registries via web search, FEMA flood zones and National Risk Index, USGS seismic and elevation, First Street Risk Factor, EPA, NOAA and USFS tools, and local energy rules.</p>
+        <p class="sub" style="margin:0">With keys or data files added in <a href="/settings">Settings</a>: ENERGY STAR, First Street API, CRREM, NREL Cambium, physrisk, BPD, Audette, and any custom API you add. Every answer is checked by a verifier, and anything it can't support is flagged for review.</p>
       </div>
     </div>
 
@@ -43,15 +45,37 @@
   </main>
 <script>
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const drop = document.getElementById("drop"), file = document.getElementById("om");
-drop.onclick = () => file.click();
+const drop = document.getElementById("drop"), picker = document.getElementById("om");
+let LABELS = ["Offering Memorandum", "Other"], chosen = [];
+fetch("/api/document-labels").then(r => r.json()).then(l => { LABELS = l; renderFiles(); });
+drop.onclick = () => picker.click();
 drop.ondragover = e => { e.preventDefault(); };
-drop.ondrop = e => { e.preventDefault(); if (e.dataTransfer.files[0]) { file.files = e.dataTransfer.files; showFile(); } };
-file.onchange = showFile;
-function showFile() {
-  const f = file.files[0];
-  drop.textContent = f ? f.name : "Drop a PDF here or click to choose";
-  drop.classList.toggle("has-file", !!f);
+drop.ondrop = e => { e.preventDefault(); addFiles(e.dataTransfer.files); };
+picker.onchange = () => { addFiles(picker.files); picker.value = ""; };
+function guessLabel(name) {
+  const n = name.toLowerCase();
+  if (/\bom\b|offering|memorandum/.test(n)) return "Offering Memorandum";
+  if (/pca|condition/.test(n)) return "Property Condition Assessment";
+  if (/phase|esa\b|environmental/.test(n)) return "Phase I ESA";
+  if (/audit|ashrae/.test(n)) return "Energy audit";
+  if (/util|bill|kwh|gas|water/.test(n)) return "Utility data";
+  if (/energy ?star|benchmark|espm/.test(n)) return "ENERGY STAR / benchmarking report";
+  if (/lease/.test(n)) return "Lease";
+  if (/leed|cert/.test(n)) return "Certification";
+  return chosen.length ? "Other" : "Offering Memorandum";
+}
+function addFiles(list) {
+  for (const f of list) chosen.push({ file: f, label: guessLabel(f.name) });
+  renderFiles();
+}
+function renderFiles() {
+  document.getElementById("files").innerHTML = chosen.map((c, i) => `<li>
+    <span class="fname">${esc(c.file.name)} <small>${(c.file.size / 1048576).toFixed(1)} MB</small></span>
+    <select data-i="${i}">${LABELS.map(l => `<option${l === c.label ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
+    <button type="button" class="link" data-remove="${i}" aria-label="Remove ${esc(c.file.name)}">Remove</button></li>`).join("");
+  document.querySelectorAll("#files select").forEach(s => s.onchange = () => chosen[s.dataset.i].label = s.value);
+  document.querySelectorAll("#files [data-remove]").forEach(b => b.onclick = () => { chosen.splice(b.dataset.remove, 1); renderFiles(); });
+  drop.classList.toggle("has-file", chosen.length > 0);
 }
 
 document.getElementById("new-review").onsubmit = async e => {
@@ -60,7 +84,7 @@ document.getElementById("new-review").onsubmit = async e => {
   err.textContent = "";
   const body = new FormData();
   body.append("address", document.getElementById("address").value);
-  if (file.files[0]) body.append("om", file.files[0]);
+  for (const c of chosen) { body.append("files", c.file); body.append("labels", c.label); }
   go.disabled = true; go.textContent = "Starting…";
   try {
     const r = await fetch("/api/reviews", { method: "POST", body });
@@ -78,7 +102,7 @@ async function loadReviews() {
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No reviews yet.</td></tr>'; return; }
   tbody.innerHTML = rows.map(m => `<tr>
     <td><a href="/reviews/${esc(m.id)}">${esc(m.title)}</a></td>
-    <td>${[m.address ? "Address" : "", m.om_name ? "OM" : ""].filter(Boolean).join(" + ")}</td>
+    <td>${[m.address ? "Address" : "", (m.documents || []).length ? m.documents.length + " document" + (m.documents.length > 1 ? "s" : "") : ""].filter(Boolean).join(" + ")}</td>
     <td>${esc(new Date(m.created_at).toLocaleString())}</td>
     <td><span class="pill ${esc(m.status)}">${esc(m.status)}</span></td>
     <td>${m.summary && m.summary.questions ? esc(m.summary.needs_review) + " of " + esc(m.summary.questions) : ""}</td>

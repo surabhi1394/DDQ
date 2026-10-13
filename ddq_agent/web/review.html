@@ -9,7 +9,7 @@
 <body>
   <header class="top">
     <a class="brand" href="/">ESG DDQ Review</a>
-    <a class="button" id="download" href="#" hidden>Download Excel</a>
+    <nav><a href="/settings">Settings</a><a class="button" id="download" href="#" hidden>Download Excel</a></nav>
   </header>
   <main>
     <h1 id="title">Loading…</h1>
@@ -92,7 +92,9 @@ const rank = { HIGH: 3, MODERATE: 2, LOW: 1 };
 const pill = (v, cls) => v ? `<span class="pill ${esc(cls ?? v)}">${esc(v)}</span>` : "";
 const level = a => (rank[a.priority] || 0) >= (rank[a.risk] || 0) ? a.priority : a.risk;
 const SOURCE_NAMES = {
-  geocode: "Geocoding (US Census)", fema_flood: "FEMA flood zone", physrisk: "physrisk climate hazards",
+  geocode: "Geocoding (US Census)", fema_flood: "FEMA flood zone", fema_nri: "FEMA National Risk Index",
+  usgs_seismic: "USGS seismic design values", usgs_elevation: "USGS elevation", first_street: "First Street",
+  physrisk: "physrisk climate hazards",
   energy_star: "ENERGY STAR Portfolio Manager", crrem: "CRREM pathways", cambium: "NREL Cambium",
   bpd: "Building Performance Database", fines_regs: "Fines & Regs", audette: "Audette",
 };
@@ -104,7 +106,7 @@ async function load() {
   document.title = meta.title + " · DDQ";
   document.getElementById("title").textContent = meta.title;
   document.getElementById("subtitle").textContent =
-    [meta.address, meta.om_name && "OM: " + meta.om_name, "Started " + new Date(meta.created_at).toLocaleString()].filter(Boolean).join(" · ");
+    [meta.address, (meta.documents || []).map(d => d.label + ": " + d.name).join(", "), "Started " + new Date(meta.created_at).toLocaleString()].filter(Boolean).join(" · ");
 
   const progress = document.getElementById("progress");
   if (meta.status === "queued" || meta.status === "running") {
@@ -170,7 +172,7 @@ function render(meta, review) {
     : '<tr><td colspan="4" class="empty">No costed actions.</td></tr>';
 
   document.getElementById("sources").innerHTML = review.connectors.map(c =>
-    `<tr><td>${esc(SOURCE_NAMES[c.connector] || c.connector)}</td><td>${pill(c.status.replace("_", " "), c.status)}</td><td>${esc(c.summary)}</td></tr>`).join("");
+    `<tr><td>${esc(SOURCE_NAMES[c.connector] || c.source || c.connector.replace("custom:", ""))}</td><td>${pill(c.status.replace("_", " "), c.status)}</td><td>${esc(c.summary)}</td></tr>`).join("");
 
   document.getElementById("notes").textContent = review.research_notes || "No research notes.";
 
