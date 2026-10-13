@@ -1,15 +1,15 @@
 # DDQ agent
 
-An ESG due diligence questionnaire (DDQ) agent for over-the-desk reviews. Give it an Offering
-Memorandum (OM) PDF and it returns the team's ESG DDQ checklist, filled in and source-cited, in the
-same spreadsheet layout the team already uses.
+An ESG due diligence questionnaire (DDQ) tool for over-the-desk reviews. Enter a property address,
+upload its Offering Memorandum (OM), or both. The agent runs the full analysis, shows the results on a
+dashboard, and gives you an Excel download of the completed ESG DDQ checklist and all the data it found.
 
 ## How it works
 
 ```
-OM received
+Address and/or OM received
   └─ RSRA agent
-       ├─ index the OM (property facts, systems, certifications, disclosures)
+       ├─ index the OM, or look the property up from its address with web search
        ├─ connectors: geocode · FEMA flood · physrisk · ENERGY STAR · CRREM · Cambium · BPD · Fines & Regs · Audette
        ├─ research gaps with web search (local rules, transit, hazards, tenants, registries)
        └─ assemble findings: one answer per checklist question
@@ -37,9 +37,27 @@ Check which data sources are live:
 ddq connectors
 ```
 
-## Run a review
+## Use the web tool
 
 ```bash
+ddq serve            # then open http://127.0.0.1:8000
+```
+
+- **New review:** type an address, drop in an OM PDF, or both, and press Start review.
+- **Progress:** the review page shows each step as it runs (a full review takes several minutes).
+- **Dashboard:** headline counts, risk profile, key findings, property facts, recommended actions and
+  costs, the status of every data source, and the full checklist with search and filters.
+- **Excel:** Summary, ESG DDQ (the team's checklist layout), Data sources and research notes,
+  Connector data (every value each source returned) and Property.
+
+Reviews are saved under `ddq_data/` (set `DDQ_DATA_DIR` to change it), one folder per review.
+To share it with the team, run `ddq serve --host 0.0.0.0` on a machine or cloud VM they can reach,
+behind your usual sign-in; the tool has no login of its own.
+
+## Run a review from the command line
+
+```bash
+ddq review --address "1260 S Park Ave, Salt Lake City, UT 84105"
 ddq review samples/60_Park_Ave_OM.pdf -o samples/60_Park.ddq.xlsx --json samples/60_Park.ddq.json
 ```
 

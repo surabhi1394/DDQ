@@ -28,7 +28,7 @@ class FakeLLM(LLM):
         ids = [line.split("]")[0].lstrip("[") for line in prompt.splitlines() if line.startswith("[Q")]
         self.calls.append((output_model.__name__, len(ids)))
         if output_model is PropertyProfile:
-            return PropertyProfile(name="60 Park", city="Salt Lake City", state="UT", year_built=2020)
+            return PropertyProfile(name="60 Park", street_address="1260 S Park Ave", city="Salt Lake City", state="UT", year_built=2020)
         if output_model is AnswerSet:
             revised = "Reviewer feedback" in prompt
             return AnswerSet(answers=[
@@ -110,7 +110,7 @@ def test_report_round_trips_through_eval(om, tmp_path):
     assert ws["A1"].value == "ENVIRONMENTAL & GHG PERFORMANCE"
     assert ws["A2"].value == "ESG Consideration" and ws["J2"].value.startswith("Pre/Post")
     assert ws["B3"].value == "Y"
-    assert set(wb.sheetnames) == {"ESG DDQ", "Data sources", "Property"}
+    assert wb.sheetnames == ["Summary", "ESG DDQ", "Data sources", "Connector data", "Property"]
 
     # Scoring the report against itself is a perfect match.
     s = score(out, out)

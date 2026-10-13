@@ -30,24 +30,34 @@ class Review:
 
 
 def run_review(
-    om_path: Path,
+    om_path: Path | None = None,
     llm: LLM | None = None,
     items: list[ChecklistItem] | None = None,
     connectors_fn: Callable[[PropertyProfile], list[ConnectorResult]] = run_connectors,
     max_rounds: int = MAX_VERIFY_ROUNDS,
     on_step: Callable[[str], None] = lambda msg: None,
+    address: str | None = None,
 ) -> Review:
+    """Review a property from an OM PDF, an address, or both (the address then overrides the OM's)."""
+    if om_path is None and not address:
+        raise ValueError("Give an Offering Memorandum, an address, or both.")
     llm = llm or LLM()
     items = items or load_template()
-    om = pdf_block(om_path)
+    om = pdf_block(om_path) if om_path else None
     log: list[str] = []
 
     def step(msg: str) -> None:
         log.append(msg)
         on_step(msg)
 
-    step("Indexing the Offering Memorandum")
-    profile = stages.extract_profile(llm, om)
+    if om:
+        step("Indexing the Offering Memorandum")
+        profile = stages.extract_profile(llm, om)
+        if address:
+            profile.street_address, profile.city, profile.state, profile.postal_code = _split_address(address, profile)
+    else:
+        step("Looking up the property from its address")
+        profile = stages.profile_from_address(llm, address)
 
     step("Running connectors")
     connector_results = connectors_fn(profile)
@@ -90,3 +100,16 @@ def run_review(
         )
     step("Done")
     return Review(profile, connector_results, evidence.research_notes, rows, rounds, log)
+
+
+def _split_address(address: str, profile: PropertyProfile) -> tuple:
+    """Best-effort "street, city, ST zip" split; keeps the OM's value for any part that's missing."""
+    parts = [p.strip() for p in address.split(",") if p.strip()]
+    street = parts[0] if parts else profile.street_address
+    city = parts[1] if len(parts) > 1 else profile.city
+    state, postal = profile.state, profile.postal_code
+    if len(parts) > 2:
+        tail = parts[2].split()
+        state = tail[0] if tail else state
+        postal = tail[1] if len(tail) > 1 else postal
+    return street, city, state, postal

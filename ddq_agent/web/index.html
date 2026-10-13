@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DDQ Reviews</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top"><a class="brand" href="/">ESG DDQ Review</a></header>
+  <main>
+    <h1>New review</h1>
+    <p class="sub">Enter a property address, upload its Offering Memorandum, or both. The agent runs the full over-the-desk analysis and fills in the ESG DDQ checklist.</p>
+
+    <div class="grid two">
+      <form class="card" id="new-review">
+        <label for="address">Property address</label>
+        <input type="text" id="address" name="address" placeholder="1260 S Park Ave, Salt Lake City, UT 84105" autocomplete="off">
+        <div class="or">and / or</div>
+        <label>Offering Memorandum (PDF)</label>
+        <div class="drop" id="drop">Drop a PDF here or click to choose</div>
+        <input type="file" id="om" name="om" accept="application/pdf" hidden>
+        <div style="margin-top:16px"><button type="submit" id="go">Start review</button></div>
+        <div class="error" id="err" role="alert"></div>
+      </form>
+
+      <div class="card">
+        <h2>What it checks</h2>
+        <p class="sub" style="margin:0 0 8px">The 65-question ESG DDQ across energy and GHG, building systems, lease, health and wellbeing, transport, climate risk and critical dependencies.</p>
+        <p class="sub" style="margin:0">Data sources: the OM, geocoding, FEMA flood zones, ENERGY STAR, CRREM, NREL Cambium, local energy rules, web search, plus physrisk, BPD and Audette once connected. Every answer is checked by a verifier, and anything it can't support is flagged for review.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Reviews</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Property</th><th>Input</th><th>Started</th><th>Status</th><th>Flagged</th><th></th></tr></thead>
+          <tbody id="reviews"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+<script>
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const drop = document.getElementById("drop"), file = document.getElementById("om");
+drop.onclick = () => file.click();
+drop.ondragover = e => { e.preventDefault(); };
+drop.ondrop = e => { e.preventDefault(); if (e.dataTransfer.files[0]) { file.files = e.dataTransfer.files; showFile(); } };
+file.onchange = showFile;
+function showFile() {
+  const f = file.files[0];
+  drop.textContent = f ? f.name : "Drop a PDF here or click to choose";
+  drop.classList.toggle("has-file", !!f);
+}
+
+document.getElementById("new-review").onsubmit = async e => {
+  e.preventDefault();
+  const err = document.getElementById("err"), go = document.getElementById("go");
+  err.textContent = "";
+  const body = new FormData();
+  body.append("address", document.getElementById("address").value);
+  if (file.files[0]) body.append("om", file.files[0]);
+  go.disabled = true; go.textContent = "Starting…";
+  try {
+    const r = await fetch("/api/reviews", { method: "POST", body });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || "Could not start the review.");
+    location.href = "/reviews/" + data.id;
+  } catch (ex) {
+    err.textContent = ex.message; go.disabled = false; go.textContent = "Start review";
+  }
+};
+
+async function loadReviews() {
+  const rows = await (await fetch("/api/reviews")).json();
+  const tbody = document.getElementById("reviews");
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No reviews yet.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(m => `<tr>
+    <td><a href="/reviews/${esc(m.id)}">${esc(m.title)}</a></td>
+    <td>${[m.address ? "Address" : "", m.om_name ? "OM" : ""].filter(Boolean).join(" + ")}</td>
+    <td>${esc(new Date(m.created_at).toLocaleString())}</td>
+    <td><span class="pill ${esc(m.status)}">${esc(m.status)}</span></td>
+    <td>${m.summary && m.summary.questions ? esc(m.summary.needs_review) + " of " + esc(m.summary.questions) : ""}</td>
+    <td>${m.status === "done" ? `<a href="/api/reviews/${esc(m.id)}/report.xlsx">Excel</a>` : ""}</td>
+  </tr>`).join("");
+  if (rows.some(m => m.status === "queued" || m.status === "running")) setTimeout(loadReviews, 4000);
+}
+loadReviews();
+</script>
+</body>
+</html>

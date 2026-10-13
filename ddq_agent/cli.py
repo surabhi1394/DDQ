@@ -12,23 +12,29 @@ def _review(args) -> int:
     from .pipeline import run_review
     from .report import write_report
 
-    review = run_review(Path(args.om), max_rounds=args.rounds, on_step=lambda m: print(f"- {m}", file=sys.stderr))
-    out = Path(args.out or Path(args.om).with_suffix(".ddq.xlsx").name)
+    if not args.om and not args.address:
+        print("Give an OM PDF, --address, or both.", file=sys.stderr)
+        return 2
+    review = run_review(Path(args.om) if args.om else None, address=args.address, max_rounds=args.rounds, on_step=lambda m: print(f"- {m}", file=sys.stderr))
+    stem = Path(args.om).stem if args.om else "".join(c if c.isalnum() else "_" for c in args.address)[:40]
+    out = Path(args.out or f"{stem}.ddq.xlsx")
     write_report(review, out)
     needs_review = sum(1 for r in review.rows if not r.verified)
     print(f"Wrote {out}: {len(review.rows)} questions, {needs_review} flagged for human review.")
     if args.json:
-        Path(args.json).write_text(
-            json.dumps(
-                {
-                    "profile": review.profile.model_dump(mode="json"),
-                    "connectors": [c.model_dump(mode="json") for c in review.connectors],
-                    "research_notes": review.research_notes,
-                    "rows": [r.model_dump(mode="json") for r in review.rows],
-                },
-                indent=2,
-            )
-        )
+        from .store import review_to_dict
+
+        Path(args.json).write_text(json.dumps(review_to_dict(review), indent=2))
+    return 0
+
+
+def _serve(args) -> int:
+    import uvicorn
+
+    from .app import create_app
+
+    print(f"DDQ tool running at http://{args.host}:{args.port}")
+    uvicorn.run(create_app(workers=args.workers), host=args.host, port=args.port)
     return 0
 
 
@@ -60,12 +66,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="ddq", description="ESG DDQ over-the-desk review agent")
     sub = parser.add_subparsers(required=True)
 
-    p = sub.add_parser("review", help="Run the review on an Offering Memorandum PDF")
-    p.add_argument("om", help="Path to the OM PDF")
+    p = sub.add_parser("review", help="Run the review on an Offering Memorandum PDF and/or an address")
+    p.add_argument("om", nargs="?", help="Path to the OM PDF (optional when --address is given)")
+    p.add_argument("--address", help="Property address, e.g. '1260 S Park Ave, Salt Lake City, UT 84105'")
     p.add_argument("-o", "--out", help="Output .xlsx (default: <om name>.ddq.xlsx)")
     p.add_argument("--json", help="Also write the full review as JSON")
     p.add_argument("--rounds", type=int, default=2, help="Max Verifier revision rounds (default 2)")
     p.set_defaults(func=_review)
+
+    p = sub.add_parser("serve", help="Run the web tool (new reviews, dashboard, Excel download)")
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--port", type=int, default=8000)
+    p.add_argument("--workers", type=int, default=2, help="Reviews that can run at the same time")
+    p.set_defaults(func=_serve)
 
     p = sub.add_parser("connectors", help="Show which data connectors are configured")
     p.set_defaults(func=_connectors)

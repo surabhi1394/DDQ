@@ -17,7 +17,8 @@ def _norm(text) -> str:
 
 def read_answers(path: Path) -> dict[str, dict[str, str]]:
     """Map normalized question text to its Response and Priority, for either layout."""
-    ws = openpyxl.load_workbook(path, data_only=True).active
+    wb = openpyxl.load_workbook(path, data_only=True)
+    ws = wb["ESG DDQ"] if "ESG DDQ" in wb.sheetnames else wb.active
     out: dict[str, dict[str, str]] = {}
     cols: dict[str, int] = {}
     for row in ws.iter_rows(values_only=True):

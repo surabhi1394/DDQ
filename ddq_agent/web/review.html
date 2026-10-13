@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DDQ Review</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/">ESG DDQ Review</a>
+    <a class="button" id="download" href="#" hidden>Download Excel</a>
+  </header>
+  <main>
+    <h1 id="title">Loading…</h1>
+    <p class="sub" id="subtitle"></p>
+
+    <section id="progress" class="card" hidden>
+      <h2>Running the review</h2>
+      <ul class="steps" id="steps"></ul>
+      <p class="sub" style="margin:12px 0 0">This page updates on its own. A full review usually takes several minutes.</p>
+    </section>
+
+    <section id="failed" class="card" hidden>
+      <h2>The review failed</h2>
+      <p class="error" id="failed-msg"></p>
+    </section>
+
+    <section id="results" hidden>
+      <div class="tiles" id="tiles"></div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>Risk profile</h2>
+          <div id="risk-bar"></div>
+          <h2 style="margin-top:18px">Key findings</h2>
+          <div id="key-findings"></div>
+        </div>
+        <div class="card">
+          <h2>Property</h2>
+          <dl class="facts" id="facts"></dl>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Recommended actions and costs</h2>
+        <div class="scroll"><table>
+          <thead><tr><th>Item</th><th>Mitigation</th><th>Cost estimate</th><th>Priority</th></tr></thead>
+          <tbody id="costs"></tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <h2>Data sources</h2>
+        <div class="scroll"><table>
+          <thead><tr><th>Source</th><th>Status</th><th>Finding</th></tr></thead>
+          <tbody id="sources"></tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <h2>ESG DDQ checklist</h2>
+        <div class="filters">
+          <input type="search" id="f-text" placeholder="Search questions and findings">
+          <select id="f-section"><option value="">All sections</option></select>
+          <select id="f-risk">
+            <option value="">Any priority</option>
+            <option value="HIGH">High</option>
+            <option value="MODERATE">Moderate</option>
+            <option value="LOW">Low</option>
+          </select>
+          <label class="check"><input type="checkbox" id="f-review"> Needs review only</label>
+        </div>
+        <div class="scroll"><table>
+          <thead><tr><th>Question</th><th>Response</th><th>Existing conditions</th><th>Mitigation</th><th>Priority</th><th>Risk</th><th>Cost</th></tr></thead>
+          <tbody id="checklist"></tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary><strong>Research notes</strong> (web search, with sources)</summary>
+          <pre class="notes" id="notes" style="margin-top:12px"></pre>
+        </details>
+      </div>
+    </section>
+  </main>
+<script>
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const id = location.pathname.split("/").pop();
+const rank = { HIGH: 3, MODERATE: 2, LOW: 1 };
+const pill = (v, cls) => v ? `<span class="pill ${esc(cls ?? v)}">${esc(v)}</span>` : "";
+const level = a => (rank[a.priority] || 0) >= (rank[a.risk] || 0) ? a.priority : a.risk;
+const SOURCE_NAMES = {
+  geocode: "Geocoding (US Census)", fema_flood: "FEMA flood zone", physrisk: "physrisk climate hazards",
+  energy_star: "ENERGY STAR Portfolio Manager", crrem: "CRREM pathways", cambium: "NREL Cambium",
+  bpd: "Building Performance Database", fines_regs: "Fines & Regs", audette: "Audette",
+};
+
+async function load() {
+  const r = await fetch("/api/reviews/" + id);
+  if (!r.ok) { document.getElementById("title").textContent = "Review not found"; return; }
+  const { meta, review } = await r.json();
+  document.title = meta.title + " · DDQ";
+  document.getElementById("title").textContent = meta.title;
+  document.getElementById("subtitle").textContent =
+    [meta.address, meta.om_name && "OM: " + meta.om_name, "Started " + new Date(meta.created_at).toLocaleString()].filter(Boolean).join(" · ");
+
+  const progress = document.getElementById("progress");
+  if (meta.status === "queued" || meta.status === "running") {
+    progress.hidden = false;
+    const steps = meta.steps.length ? meta.steps : ["Waiting to start"];
+    document.getElementById("steps").innerHTML = steps.map((s, i) =>
+      `<li class="${i === steps.length - 1 ? "current" : ""}">${esc(s)}</li>`).join("");
+    setTimeout(load, 3000);
+    return;
+  }
+  progress.hidden = true;
+  if (meta.status === "failed") {
+    document.getElementById("failed").hidden = false;
+    document.getElementById("failed-msg").textContent = meta.error;
+    return;
+  }
+  render(meta, review);
+}
+
+function render(meta, review) {
+  document.getElementById("results").hidden = false;
+  const dl = document.getElementById("download");
+  dl.href = `/api/reviews/${id}/report.xlsx`; dl.hidden = false;
+  const s = meta.summary, rows = review.rows;
+
+  document.getElementById("tiles").innerHTML = [
+    [s.questions, "Questions answered", ""],
+    [s.verified, "Verified against sources", "ok"],
+    [s.needs_review, "Need human review", s.needs_review ? "warn" : "ok"],
+    [s.high_risk, "High priority or risk", s.high_risk ? "bad" : "ok"],
+    [s.moderate_risk, "Moderate", s.moderate_risk ? "warn" : ""],
+    [s.confirm_on_site, "Confirm on site visit", ""],
+    [`${s.connectors_ok}/${s.connectors_total}`, "Data sources returned data", ""],
+  ].map(([n, l, c]) => `<div class="tile ${c}"><div class="num">${esc(n)}</div><div class="lbl">${esc(l)}</div></div>`).join("");
+
+  const counts = { HIGH: 0, MODERATE: 0, LOW: 0 };
+  rows.forEach(r => counts[level(r.answer)]++);
+  const total = rows.length || 1;
+  const colors = { HIGH: "var(--bad)", MODERATE: "var(--warn)", LOW: "var(--ok)" };
+  document.getElementById("risk-bar").innerHTML =
+    `<div class="bar">${Object.keys(counts).map(k => `<span style="width:${counts[k] / total * 100}%;background:${colors[k]}"></span>`).join("")}</div>
+     <div class="legend">${Object.keys(counts).map(k => `<span><i style="background:${colors[k]}"></i>${k[0] + k.slice(1).toLowerCase()} ${counts[k]}</span>`).join("")}</div>`;
+
+  const key = rows.filter(r => level(r.answer) !== "LOW").sort((a, b) => rank[level(b.answer)] - rank[level(a.answer)]);
+  document.getElementById("key-findings").innerHTML = key.length
+    ? `<table><tbody>${key.map(r => `<tr><td>${pill(level(r.answer))}</td><td>${esc(r.item.question)}<div class="note">${esc(r.answer.existing_conditions)}</div></td></tr>`).join("")}</tbody></table>`
+    : '<p class="empty">No moderate or high items.</p>';
+
+  const p = review.profile, facts = [
+    ["Name", p.name], ["Address", [p.street_address, p.city, p.state, p.postal_code].filter(Boolean).join(", ")],
+    ["Type", p.property_type], ["Year built", p.year_built],
+    ["Floor area", p.gross_floor_area_sqft && Number(p.gross_floor_area_sqft).toLocaleString() + " sf"],
+    ["Floors", p.floors], ["Site", p.site_acres && p.site_acres + " acres"], ["Zoning", p.zoning],
+    ["Certifications", (p.certifications || []).join(", ")], ["ENERGY STAR score", p.energy_star_score],
+    ["Site EUI", p.site_eui_kbtu_sqft && p.site_eui_kbtu_sqft + " kBtu/sf"], ["Heating", p.heating_fuel],
+    ["HVAC", p.hvac_summary], ["EV charging", p.ev_chargers], ["Known issues", (p.known_issues || []).join("; ")],
+  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
+  document.getElementById("facts").innerHTML = facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+
+  const costed = rows.filter(r => r.answer.cost_estimate && r.answer.cost_estimate.trim());
+  document.getElementById("costs").innerHTML = costed.length
+    ? costed.map(r => `<tr><td>${esc(r.item.question)}</td><td>${esc(r.answer.mitigation)}</td><td>${esc(r.answer.cost_estimate)}</td><td>${pill(r.answer.priority)}</td></tr>`).join("")
+    : '<tr><td colspan="4" class="empty">No costed actions.</td></tr>';
+
+  document.getElementById("sources").innerHTML = review.connectors.map(c =>
+    `<tr><td>${esc(SOURCE_NAMES[c.connector] || c.connector)}</td><td>${pill(c.status.replace("_", " "), c.status)}</td><td>${esc(c.summary)}</td></tr>`).join("");
+
+  document.getElementById("notes").textContent = review.research_notes || "No research notes.";
+
+  const sections = [...new Set(rows.map(r => r.item.section))];
+  const sel = document.getElementById("f-section");
+  sel.innerHTML = '<option value="">All sections</option>' + sections.map(x => `<option>${esc(x)}</option>`).join("");
+  ["f-text", "f-section", "f-risk", "f-review"].forEach(i => document.getElementById(i).oninput = () => table(rows));
+  table(rows);
+}
+
+function table(rows) {
+  const text = document.getElementById("f-text").value.toLowerCase();
+  const section = document.getElementById("f-section").value;
+  const risk = document.getElementById("f-risk").value;
+  const onlyReview = document.getElementById("f-review").checked;
+  const shown = rows.filter(r =>
+    (!section || r.item.section === section) &&
+    (!risk || level(r.answer) === risk) &&
+    (!onlyReview || !r.verified) &&
+    (!text || (r.item.question + " " + r.answer.existing_conditions + " " + r.answer.mitigation).toLowerCase().includes(text)));
+  let html = "", current = null;
+  for (const r of shown) {
+    if (r.item.section !== current) { current = r.item.section; html += `<tr class="section"><td colspan="7">${esc(current)}</td></tr>`; }
+    const a = r.answer, notes = [];
+    if (a.confirm_on_site) notes.push("Confirm on site visit");
+    if (!r.verified) notes.push("Needs review: " + r.verifier_note);
+    if (a.sources.length) notes.push("Sources: " + a.sources.join("; "));
+    html += `<tr><td class="q">${esc(r.item.question)}${r.item.timing ? `<div class="note">${esc(r.item.timing)} site visit</div>` : ""}</td>
+      <td>${pill(a.response)}</td>
+      <td>${esc(a.existing_conditions)}${notes.map(n => `<div class="note">${esc(n)}</div>`).join("")}</td>
+      <td>${esc(a.mitigation)}</td><td>${pill(a.priority)}</td><td>${pill(a.risk)}</td><td>${esc(a.cost_estimate)}</td></tr>`;
+  }
+  document.getElementById("checklist").innerHTML = html || '<tr><td colspan="7" class="empty">No questions match.</td></tr>';
+}
+load();
+</script>
+</body>
+</html>

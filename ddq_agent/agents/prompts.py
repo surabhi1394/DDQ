@@ -20,6 +20,15 @@ Read every page, including photos, captions, tables, stacking plans and floor pl
 Record only what the OM states or clearly shows; leave a field null when it does not say.
 Put defects, remediation work and seller disclosures in known_issues, with the page number."""
 
+ADDRESS_RESEARCH_SYSTEM = """\
+You are starting an ESG due diligence review of a commercial property from its address alone.
+Use web search to find what public sources say about the building: name, property type, year built,
+gross and rentable floor area, floors, site size, parcel numbers, zoning, owner and major tenants,
+certifications (LEED, ENERGY STAR, WELL, BOMA), any published ENERGY STAR score or EUI, HVAC and
+heating fuel, EV charging, renovations, defects or disputes. Check county assessor records, LEED and
+ENERGY STAR registries, brokerage listings and news. Write concise notes and cite the URL for every
+fact. Say plainly what you could not find; do not guess."""
+
 RESEARCH_SYSTEM = """\
 You are the research step of an ESG over-the-desk review of a commercial property.
 You have the Offering Memorandum, the facts extracted from it, and results from data connectors.

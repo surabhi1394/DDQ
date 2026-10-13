@@ -65,6 +65,25 @@ def _cost_library() -> str:
     return yaml.safe_dump(yaml.safe_load(resources.files("ddq_agent.data").joinpath("cost_library.yaml").read_text()))
 
 
+def _docs(om: dict | None) -> list[dict]:
+    return [om] if om else []
+
+
+def profile_from_address(llm: LLM, address: str) -> PropertyProfile:
+    """No OM: build the profile from public sources with web search."""
+    notes = llm.text(
+        prompts.ADDRESS_RESEARCH_SYSTEM,
+        [{"type": "text", "text": f"Property address: {address}"}],
+        tools=[WEB_SEARCH_TOOL],
+    )
+    return llm.structured(
+        prompts.PROFILE_SYSTEM,
+        [{"type": "text", "text": f"Property address: {address}\n\nPublic research notes:\n{notes}\n\n"
+          "Extract the property profile from these notes. Keep the address exactly as given unless the notes correct it."}],
+        PropertyProfile,
+    )
+
+
 def extract_profile(llm: LLM, om: dict) -> PropertyProfile:
     return llm.structured(
         prompts.PROFILE_SYSTEM,
@@ -73,9 +92,8 @@ def extract_profile(llm: LLM, om: dict) -> PropertyProfile:
     )
 
 
-def research(llm: LLM, om: dict, evidence: Evidence, items: list[ChecklistItem]) -> str:
-    content = [
-        om,
+def research(llm: LLM, om: dict | None, evidence: Evidence, items: list[ChecklistItem]) -> str:
+    content = _docs(om) + [
         {"type": "text", "text": evidence.as_text()},
         {"type": "text", "text": "Checklist the research must support:\n" + _questions_text(items)},
     ]
@@ -84,7 +102,7 @@ def research(llm: LLM, om: dict, evidence: Evidence, items: list[ChecklistItem])
 
 def answer(
     llm: LLM,
-    om: dict,
+    om: dict | None,
     evidence: Evidence,
     items: list[ChecklistItem],
     feedback: dict[str, str] | None = None,
@@ -95,7 +113,10 @@ def answer(
         text += "\n\nYour previous drafts of these answers:\n" + json.dumps(
             [previous[i.id].model_dump() for i in items if i.id in previous], indent=1
         )
-    result = llm.structured(prompts.ANSWER_SYSTEM, [om, {"type": "text", "text": evidence.as_text()}, {"type": "text", "text": text}], AnswerSet)
+    if om is None:
+        text += "\n\nNo Offering Memorandum was provided for this property; rely on the connectors and research notes."
+    content = _docs(om) + [{"type": "text", "text": evidence.as_text()}, {"type": "text", "text": text}]
+    result = llm.structured(prompts.ANSWER_SYSTEM, content, AnswerSet)
     return _keep_requested(result.answers, items)
 
 
@@ -123,10 +144,9 @@ def retrofit(llm: LLM, evidence: Evidence, items: list[ChecklistItem], answers: 
     return updated
 
 
-def verify(llm: LLM, om: dict, evidence: Evidence, items: list[ChecklistItem], answers: dict[str, ChecklistAnswer]) -> dict[str, Verdict]:
+def verify(llm: LLM, om: dict | None, evidence: Evidence, items: list[ChecklistItem], answers: dict[str, ChecklistAnswer]) -> dict[str, Verdict]:
     drafts = [{"question": i.question, "timing": i.timing, **answers[i.id].model_dump()} for i in items if i.id in answers]
-    content = [
-        om,
+    content = _docs(om) + [
         {"type": "text", "text": evidence.as_text()},
         {"type": "text", "text": "Answers to verify:\n" + json.dumps(drafts, indent=1)},
     ]

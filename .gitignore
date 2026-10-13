@@ -7,3 +7,4 @@ __pycache__/
 samples/
 *.ddq.xlsx
 *.ddq.json
+ddq_data/
