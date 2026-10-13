@@ -1,0 +1,27 @@
+# Reference cost lines the Retrofit Specialist reuses when proposing mitigations.
+# Seeded from the team's completed 60 Park checklist. Add lines as new reviews close out;
+# the agent quotes these verbatim when a mitigation matches, and labels anything else "estimate".
+- item: ENERGY STAR Certification (Licensed Engineer verification)
+  cost: "$2,100"
+  applies_to: [energy star, certification, benchmarking]
+- item: Full Decarbonization Roadmap
+  cost: "$40,000"
+  applies_to: [net zero, decarbonization, ghg, carbon]
+- item: LEED Annual Ongoing Maintenance
+  cost: "$11,550"
+  applies_to: [leed, certification]
+- item: Waste Audit
+  cost: "$5,500-$10,000"
+  applies_to: [waste]
+- item: Annual IAQ Testing
+  cost: "$3,000-$5,000"
+  applies_to: [indoor air quality, iaq, ventilation]
+- item: Carbon filters and outside-air damper programming (wildfire smoke)
+  cost: "$20,000"
+  applies_to: [climate, wildfire, air quality]
+- item: Embodied Carbon / LCA study
+  cost: "Fee dependent on formal scope determination"
+  applies_to: [embodied carbon, circular economy]
+- item: Accessibility mitigations
+  cost: "Consult PCA Report for fees associated with mitigations"
+  applies_to: [accessibility, ada]

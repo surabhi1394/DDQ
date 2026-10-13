@@ -1,0 +1,457 @@
+[
+  {
+    "id": "Q01",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Environmental Performance Certificate or Energy Star Score.",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q02",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Have relevant portfolio Net Zero Carbon commitments been considered in line with the buildings anticipated GHG footprint?",
+    "type": "Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q03",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Is building compliant with local energy or environmental regulations?",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q04",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Is the property certified under any third party sustainability rating? E.g. BREEAM, LEED, DGNB, WELL",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q05",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Is the property currently included in a certified EMS (Environmental Management System) system?",
+    "type": "Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q06",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Is the property currently GRESB assessed under the seller?",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q07",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Has historic energy data been provided? If so, does the energy consumption of the property present a material risk to the overall carbon footprint of the portfolio?",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q08",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Is information available on the type and age of lighting infrastructure?",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q09",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "What type of energy is used for heating? Are there alternative energy sources available?",
+    "type": "Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q10",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Has an energy audit been conducted in the last four years?",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q11",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Is information available on the thermal quality of the windows?",
+    "type": "Energy",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q12",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Does your facility have adequate back-up power supply needed to support critical functions?",
+    "type": "Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q13",
+    "section": "ENVIRONMENTAL & GHG PERFORMANCE",
+    "question": "Are there tenants that have \"high-energy\" requirements?",
+    "type": "Energy",
+    "timing": ""
+  },
+  {
+    "id": "Q14",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Has historic water consumption data been provided?",
+    "type": "Water",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q15",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Maintenance and mandatory regular inspection protocols to be requested (MEP, fire safety)",
+    "type": "Safety",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q16",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Flush and flow rates of sanitary fixtures and fittings",
+    "type": "Water",
+    "timing": "Pre/Post"
+  },
+  {
+    "id": "Q17",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Has a water audit been undertaken in the last four years?",
+    "type": "Water",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q18",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Has historic waste data been provided?",
+    "type": "Waste",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q19",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Is there sufficient space available for waste separation and collection?",
+    "type": "Waste",
+    "timing": "Post"
+  },
+  {
+    "id": "Q20",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Has a waste stream audit been conducted in the last four years?",
+    "type": "Waste",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q21",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Where is the drinking water in the asset sourced from? Are drinking water testing protocols available for review?",
+    "type": "Water/Safety",
+    "timing": "Post"
+  },
+  {
+    "id": "Q22",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Does the asset have an emergency response plan? Does the plan include sources of outside assistance (e.g. mutual aid) during an emergency. Has the plan been tested through an actual event or exercise",
+    "type": "Tenants/Safety",
+    "timing": "Post"
+  },
+  {
+    "id": "Q23",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Is there a designated storm shelter inside the facility for staff and visitors (e.g., emergency shelter, overnight shelter)?",
+    "type": "Tenants/Safety",
+    "timing": "Post"
+  },
+  {
+    "id": "Q24",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Have material risks been identified in the Due Diligence related to the building fabric?",
+    "type": "Tenants/Safety",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q25",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Have details of all metering arrangements been provided? Do sub-meters exist for tracking occupier consumption? e.g. via a metering plan",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q26",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Is metering data being automatically collected, via smart meters?",
+    "type": "Tenants/Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q27",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Does the property have equipment installed to monitor Indoor Environmental Quality? e.g. temperature, relative humidity, CO₂ CO, VOCs, PM10, PM2.5, noise, light.",
+    "type": "Tenants/Safety",
+    "timing": "Post"
+  },
+  {
+    "id": "Q28",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Will the asset operations require handling or storage of hazardous materials or food products? If yes, is building fit for purpose for storage/handling of hazardous material or food products?",
+    "type": "Tenants/Safety",
+    "timing": "Post"
+  },
+  {
+    "id": "Q29",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Are facilities including equipment on roofs or outside vulnerable to high winds?",
+    "type": "Environmental/ Climate",
+    "timing": "Post"
+  },
+  {
+    "id": "Q30",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Are there particular parts of your facility or infrastructure that are vulnerable to extreme heat? Check roof areas for extreme heat damage and water sealants for leaks.",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q31",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Are there particular parts of your facility or infrastructure that are vulnerable to extreme cold, icing, freezing, or excessive snowfall (e.g., snow loads on roof; freezing of pipes)?",
+    "type": "Environmental/ Climate",
+    "timing": "Post"
+  },
+  {
+    "id": "Q32",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Are the routes of the utility connections (e.g., electrical power lines) located in areas susceptible to damage by wind, ice or extreme heat?",
+    "type": "Environmental/ Climate",
+    "timing": "Post"
+  },
+  {
+    "id": "Q33",
+    "section": "BUILDING SYSTEMS & OPERATIONS",
+    "question": "Embodied Carbon and Circular Economy Policies",
+    "type": "Environmental/ Climate",
+    "timing": ""
+  },
+  {
+    "id": "Q34",
+    "section": "LEASE",
+    "question": "Has an occupier service charge scheme been set up for utilities, waste, and on-site ESG initiatives?",
+    "type": "Tenants",
+    "timing": ""
+  },
+  {
+    "id": "Q35",
+    "section": "LEASE",
+    "question": "To what extent are green leases in place?",
+    "type": "Tenants",
+    "timing": ""
+  },
+  {
+    "id": "Q36",
+    "section": "LEASE",
+    "question": "Do the current / future occupier(s) pose a risk to Manova's reputation or have operations with high environmental impacts?",
+    "type": "Tenants",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q37",
+    "section": "LEASE",
+    "question": "Are there any ESG requirements stipulated in lease contracts (like certain level of green building certificate, renewable energy provider, etc.)",
+    "type": "Tenants",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q38",
+    "section": "HEALTH & WELLBEING/TENANT ENGAGEMENT",
+    "question": "Is the daylight level and view from the interior of the building considered acceptable given the asset class?",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q39",
+    "section": "HEALTH & WELLBEING/TENANT ENGAGEMENT",
+    "question": "How is the building ventilated? Has this recently been reviewed and is it sufficient? Does the lease stipulate any mandatory technical requirements and are these being met (temperature, air flow)?",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q40",
+    "section": "HEALTH & WELLBEING/TENANT ENGAGEMENT",
+    "question": "Is there any information on tenant fit out qualities (e.g. acoustic qualities, materials…)",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q41",
+    "section": "HEALTH & WELLBEING/TENANT ENGAGEMENT",
+    "question": "Does the building meet all Accessibility standards",
+    "type": "Safety",
+    "timing": ""
+  },
+  {
+    "id": "Q42",
+    "section": "HEALTH & WELLBEING/TENANT ENGAGEMENT",
+    "question": "Do occupiers have any access to ecological/green amenity space? Spaces can be within an internal courtyard, terracing or as part of the external landscaping.",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q43",
+    "section": "HEALTH & WELLBEING/TENANT ENGAGEMENT",
+    "question": "Is historical information available on tenant engagement strategies?",
+    "type": "Tenants",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q44",
+    "section": "HEALTH & WELLBEING/TENANT ENGAGEMENT",
+    "question": "Have tenants been provided with a guide to operating their spaces sustainably?",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q45",
+    "section": "TRANSPORTATION",
+    "question": "How close is the property to public transport / does the property have alternative transport options?",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q46",
+    "section": "TRANSPORTATION",
+    "question": "How many EV chargers are required and what is the potential for installing more EV chargers",
+    "type": "Energy",
+    "timing": ""
+  },
+  {
+    "id": "Q47",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Has a flood risk assessment been undertaken? If so, are there any risks identified?",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q48",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Has an ordinance investigation been undertaken?",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q49",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Has a land contamination assessment been undertaken? If so, are there any risks identified?",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q50",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Does the site lie in an area of high radon gas risk?",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q51",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Has a Site Drainage Plan been provided?",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q52",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Are there any biodiversity risks or constraints that could impact or limit activity at the property?",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q53",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Are there any potential climate change risks? e.g. overheating, extreme weather events, flooding",
+    "type": "Environmental/ Climate",
+    "timing": "Pre"
+  },
+  {
+    "id": "Q54",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "Are there physical property characteristics which may impede flexibility in usage going forward? (see considerations list)",
+    "type": "Environmental/ Climate",
+    "timing": "Post"
+  },
+  {
+    "id": "Q55",
+    "section": "ENVIRONMENTAL/CLIMATE RISK",
+    "question": "If your facility is inoperable, are there any major secondary impacts to a developed area of natural resource?",
+    "type": "Environmental/ Climate",
+    "timing": "Post"
+  },
+  {
+    "id": "Q56",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Power- How long can the facility function without power?- Are there sources of back-up power or alternative energy supply? If so, please describe.- Is there an alternative site that serves this function while this site is being repaired?- Are there contracts in place to restore power?",
+    "type": "Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q57",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Water- What is the amount of time it takes an outage to effect operations at this site?- Is there a redundant water supply that can be provided to this site?- Are there back-up sources of water?- Are there contracts in place to restore water to this site?",
+    "type": "Water",
+    "timing": "Post"
+  },
+  {
+    "id": "Q58",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Wastewater- What is the amount of time it takes for an outage to effect operations?- Is there a redundant waste water supply that can be provided to this site?- Are there back-up methods to deal with waste water?- Are there contracts in place to restore waste water to this site?",
+    "type": "Water",
+    "timing": "Post"
+  },
+  {
+    "id": "Q59",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Natural Gas- How critical is natural gas to the operations of the facility?- How long can the facility function without natural gas?- What is the worst-case scenario and where are the single-point failures?- Are there contracts in place to restore natural gas?- Does the facility have an emergency plan that establishes repair priorities?",
+    "type": "Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q60",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Other Energy Sources (Petroleum Fuels)- Does the facility depend on other energy sources other than power and natural gas?- How critical are these sources to the operations of the facility?- How long can the facility function without these sources?- What is the worst-case scenario and where are the single-point failures?- Are there contracts in place to restore these energy sources?- Does the facility have an emergency plan that establishes repair priorities?",
+    "type": "Energy",
+    "timing": "Post"
+  },
+  {
+    "id": "Q61",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Continuity / Supply Chain - What critical supplies are needed on a daily/weekly/monthly basis for operation of the facility? - How critical are these supplies? - How long can the facility function without these supplies? - Are there contracts in place to restore the provisioning of these supplies or a back-up provider or an alternate delivery system?",
+    "type": "Tenants/ Community",
+    "timing": "Post"
+  },
+  {
+    "id": "Q62",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Transportation- What are the critical available transportation mode(s) to this facility(e.g., road, rail, navigable water)?- What is the amount of time it takes an outage to effect operations?- What is the worst-case scenario and where are the single-point failures?- Are there backup or redundant systems in place if the primary transportation routes are disrupted?- Does the facility have an emergency plan that establishes repair to the transportation infrastructure or rerouting priorities to the site?",
+    "type": "Tenants",
+    "timing": "Post"
+  },
+  {
+    "id": "Q63",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Information Technology (SCADA, cyber) - What critical information technologies service the facility? - What is the amount of time it takes an outage to effect operations? - What is the worst-case scenario and where are the single-point failures? - Are there backup or redundant systems in place if the primary systems are disrupted? - Does the facility have an emergency plan that establishes repair priorities? - Is there another site that can house the operations of this facility to ensure continuity of operations?",
+    "type": "Safety",
+    "timing": "Post"
+  },
+  {
+    "id": "Q64",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "Telecommunications - Which telecommunications are critical to operations at this site? - What is the amount of time it takes for an outage to effect operations? - What is the worst-case scenario and where are the single-point failures? - Are there backup or redundant systems in place if the primary systems are disrupted? - Does the facility have an emergency plan that establishes telecommunication repair priorities?",
+    "type": "Safety",
+    "timing": "Post"
+  },
+  {
+    "id": "Q65",
+    "section": "CRITICAL DEPENDENCIES",
+    "question": "What are the impacts to your community if your facility is damaged to the point of not being able to operate? - What loss of services are likely to result, and how would this impact the community? - Are there specific demographic groups that would be most impacted? - Are there back-up or alternative service suppliers that can address needs during the disruption? - Does your facility have a continuity of operations plan?",
+    "type": "Tenants/ Community",
+    "timing": "Post"
+  }
+]

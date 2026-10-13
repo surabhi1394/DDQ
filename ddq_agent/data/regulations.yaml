@@ -1,0 +1,69 @@
+# Local building energy benchmarking (BM) and building performance standard (BPS) rules.
+# Used by the "Fines & Regs" connector. This is a starting table, not legal advice:
+# every entry carries verify: true so the agent confirms current thresholds and deadlines
+# with web search before relying on them. Update last_reviewed when you check an entry.
+#
+# match: lowercase city and/or state the rule applies to (state-only rules apply statewide).
+- name: Salt Lake City Elevate Buildings
+  match: {city: salt lake city, state: ut}
+  kind: BM
+  applies_over_sqft: 25000
+  summary: Annual ENERGY STAR Portfolio Manager benchmarking and reporting for commercial buildings of 25,000 sq ft and over.
+  penalty: Civil penalties for non-reporting.
+  url: https://www.slc.gov/sustainability/elevate-buildings/
+  verify: true
+  last_reviewed: null
+- name: New York City Local Law 97
+  match: {city: new york, state: ny}
+  kind: BPS
+  applies_over_sqft: 25000
+  summary: Annual carbon emissions limits per sq ft by occupancy group, tightening in 2030 and 2035.
+  penalty: $268 per metric ton CO2e over the limit, plus reporting penalties.
+  url: https://www.nyc.gov/site/sustainablebuildings/ll97/local-law-97.page
+  verify: true
+  last_reviewed: null
+- name: Boston BERDO 2.0
+  match: {city: boston, state: ma}
+  kind: BPS
+  applies_over_sqft: 20000
+  summary: Emissions reporting and declining emissions standards reaching net zero by 2050.
+  penalty: Per-ton alternative compliance payments and daily fines for non-compliance.
+  url: https://www.boston.gov/departments/environment/berdo
+  verify: true
+  last_reviewed: null
+- name: Energize Denver
+  match: {city: denver, state: co}
+  kind: BPS
+  applies_over_sqft: 25000
+  summary: Benchmarking plus site EUI performance targets with interim and 2030 final targets.
+  penalty: Per-kBtu fines for missing targets.
+  url: https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Climate-Action-Sustainability-Resiliency/High-Performance-Buildings-and-Homes/Energize-Denver-Hub
+  verify: true
+  last_reviewed: null
+- name: Colorado Building Performance Standard
+  match: {state: co}
+  kind: BPS
+  applies_over_sqft: 50000
+  summary: Statewide benchmarking and GHG/EUI performance targets for 2026 and 2030.
+  penalty: Daily fines for non-compliance.
+  url: https://energyoffice.colorado.gov/building-performance-colorado
+  verify: true
+  last_reviewed: null
+- name: Washington Clean Buildings Performance Standard
+  match: {state: wa}
+  kind: BPS
+  applies_over_sqft: 20000
+  summary: EUI targets and energy management plans; Tier 1 (larger) buildings report first.
+  penalty: Per-sq-ft penalties for non-compliance.
+  url: https://www.commerce.wa.gov/growing-the-economy/energy/buildings/
+  verify: true
+  last_reviewed: null
+- name: Washington DC Building Energy Performance Standards
+  match: {city: washington, state: dc}
+  kind: BPS
+  applies_over_sqft: 10000
+  summary: ENERGY STAR score standards by property type over six-year compliance cycles.
+  penalty: Alternative compliance payments up to $10 per sq ft.
+  url: https://doee.dc.gov/service/building-energy-performance-standards-beps
+  verify: true
+  last_reviewed: null

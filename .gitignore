@@ -1,0 +1,9 @@
+__pycache__/
+*.egg-info/
+.venv/
+.env
+.pytest_cache/
+# Deal documents and outputs stay local
+samples/
+*.ddq.xlsx
+*.ddq.json
